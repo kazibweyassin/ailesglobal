@@ -5,61 +5,54 @@ const prisma = new PrismaClient()
 async function main() {
   console.log('🌱 Starting database seed...')
 
-  // Create Universities
-  const universities = await Promise.all([
-    prisma.university.upsert({
-      where: { name: 'Harvard University' },
-      update: {},
-      create: {
-        name: 'Harvard University',
-        country: 'United States',
-        city: 'Cambridge',
-        website: 'https://www.harvard.edu',
-        ranking: 1,
-        description: 'Ivy League research university renowned for academic excellence and innovation.',
-        logo: 'https://images.unsplash.com/photo-1562774053-701939374585?w=200&h=200&fit=crop'
-      }
-    }),
-    prisma.university.upsert({
-      where: { name: 'Massachusetts Institute of Technology' },
-      update: {},
-      create: {
-        name: 'Massachusetts Institute of Technology',
-        country: 'United States',
-        city: 'Cambridge',
-        website: 'https://www.mit.edu',
-        ranking: 2,
-        description: 'Leading institution in science, technology, engineering, and mathematics.',
-        logo: 'https://images.unsplash.com/photo-1498243691581-b145c3f54a5a?w=200&h=200&fit=crop'
-      }
-    }),
-    prisma.university.upsert({
-      where: { name: 'University of Oxford' },
-      update: {},
-      create: {
-        name: 'University of Oxford',
-        country: 'United Kingdom',
-        city: 'Oxford',
-        website: 'https://www.ox.ac.uk',
-        ranking: 1,
-        description: 'The oldest university in the English-speaking world, renowned for academic excellence.',
-        logo: 'https://images.unsplash.com/photo-1520637836862-4d197d17c962?w=200&h=200&fit=crop'
-      }
-    }),
-    prisma.university.upsert({
-      where: { name: 'University of Toronto' },
-      update: {},
-      create: {
-        name: 'University of Toronto',
-        country: 'Canada',
-        city: 'Toronto',
-        website: 'https://www.utoronto.ca',
-        ranking: 1,
-        description: 'Canada\'s leading research university with world-class programs and facilities.',
-        logo: 'https://images.unsplash.com/photo-1562774053-701939374585?w=200&h=200&fit=crop'
-      }
-    })
-  ])
+  // Create Universities (use find-or-create to avoid requiring a unique `where` key)
+  const universitySeedData = [
+    {
+      name: 'Harvard University',
+      country: 'United States',
+      city: 'Cambridge',
+      website: 'https://www.harvard.edu',
+      ranking: 1,
+      description: 'Ivy League research university renowned for academic excellence and innovation.',
+      logo: 'https://images.unsplash.com/photo-1562774053-701939374585?w=200&h=200&fit=crop'
+    },
+    {
+      name: 'Massachusetts Institute of Technology',
+      country: 'United States',
+      city: 'Cambridge',
+      website: 'https://www.mit.edu',
+      ranking: 2,
+      description: 'Leading institution in science, technology, engineering, and mathematics.',
+      logo: 'https://images.unsplash.com/photo-1498243691581-b145c3f54a5a?w=200&h=200&fit=crop'
+    },
+    {
+      name: 'University of Oxford',
+      country: 'United Kingdom',
+      city: 'Oxford',
+      website: 'https://www.ox.ac.uk',
+      ranking: 1,
+      description: 'The oldest university in the English-speaking world, renowned for academic excellence.',
+      logo: 'https://images.unsplash.com/photo-1520637836862-4d197d17c962?w=200&h=200&fit=crop'
+    },
+    {
+      name: 'University of Toronto',
+      country: 'Canada',
+      city: 'Toronto',
+      website: 'https://www.utoronto.ca',
+      ranking: 1,
+      description: "Canada's leading research university with world-class programs and facilities.",
+      logo: 'https://images.unsplash.com/photo-1562774053-701939374585?w=200&h=200&fit=crop'
+    }
+  ]
+
+  const universities = [] as any[]
+  for (const u of universitySeedData) {
+    let uni = await prisma.university.findFirst({ where: { name: u.name } })
+    if (!uni) {
+      uni = await prisma.university.create({ data: u })
+    }
+    universities.push(uni)
+  }
 
   console.log('✅ Universities created')
 
