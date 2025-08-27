@@ -1,0 +1,329 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql" // or "sqlite" for development
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  password      String
+  name          String
+  avatar        String?
+  verified      Boolean   @default(false)
+  role          UserRole  @default(STUDENT)
+  profile       Profile?
+  applications  Application[]
+  savedPrograms SavedProgram[]
+  chatSessions  ChatSession[]
+  
+  // Phase 4: New relationships
+  documents     Document[]
+  notifications Notification[]
+  activities    UserActivity[]
+  recommendations AIRecommendation[]
+  interviews    Interview[]
+  
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+model Profile {
+  id          String @id @default(cuid())
+  userId      String @unique
+  user        User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // Academic Info
+  educationLevel    String?
+  fieldOfStudy      String?
+  gpa               Float?
+  languageTests     Json? // TOEFL, IELTS scores
+  
+  // Personal Info
+  dateOfBirth       DateTime?
+  nationality       String?
+  passportCountry   String?
+  phoneNumber       String?
+  address           Json?
+  
+  // Preferences
+  preferredCountries String[]
+  budgetRange       Json? // {min, max, currency}
+  targetDegree      String?
+  careerGoals       String?
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Program {
+  id                String    @id @default(cuid())
+  title             String
+  description       String
+  university        University @relation(fields: [universityId], references: [id])
+  universityId      String
+  
+  // Academic Details
+  degree            String
+  field             String
+  duration          Int // in months
+  language          String
+  startDates        DateTime[]
+  
+  // Requirements
+  requirements      Json
+  gpaMin            Float?
+  languageReqs      Json // TOEFL/IELTS requirements
+  
+  // Financial
+  tuitionFee        Int
+  currency          String
+  scholarships      Scholarship[]
+  
+  // Location
+  country           String
+  city              String
+  campus            String?
+  
+  // Metadata
+  ranking           Int?
+  accreditation     String[]
+  tags              String[]
+  isActive          Boolean @default(true)
+  
+  applications      Application[]
+  savedBy           SavedProgram[]
+  interviews        Interview[] // Phase 4: Interview relationship
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model University {
+  id            String    @id @default(cuid())
+  name          String
+  country       String
+  city          String
+  website       String?
+  logo          String?
+  ranking       Int?
+  description   String?
+  programs      Program[]
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+model Scholarship {
+  id            String    @id @default(cuid())
+  name          String
+  description   String
+  amount        Int
+  currency      String
+  type          ScholarshipType
+  program       Program   @relation(fields: [programId], references: [id])
+  programId     String
+  
+  // Eligibility
+  eligibility   Json
+  deadline      DateTime
+  isActive      Boolean @default(true)
+  
+  applications  Application[]
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Application {
+  id            String @id @default(cuid())
+  user          User   @relation(fields: [userId], references: [id])
+  userId        String
+  program       Program @relation(fields: [programId], references: [id])
+  programId     String
+  scholarship   Scholarship? @relation(fields: [scholarshipId], references: [id])
+  scholarshipId String?
+  
+  status        ApplicationStatus @default(DRAFT)
+  submittedAt   DateTime?
+  documents     Json? // Document URLs and metadata
+  notes         String?
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@unique([userId, programId])
+}
+
+model SavedProgram {
+  id        String @id @default(cuid())
+  user      User   @relation(fields: [userId], references: [id])
+  userId    String
+  program   Program @relation(fields: [programId], references: [id])
+  programId String
+  
+  createdAt DateTime @default(now())
+  
+  @@unique([userId, programId])
+}
+
+model ChatSession {
+  id        String @id @default(cuid())
+  user      User   @relation(fields: [userId], references: [id])
+  userId    String
+  title     String?
+  messages  Json // Array of {role, content, timestamp}
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// Phase 4: Advanced Features Models
+
+model Document {
+  id          String @id @default(cuid())
+  user        User   @relation(fields: [userId], references: [id])
+  userId      String
+  filename    String
+  originalName String
+  fileType    String
+  fileSize    Int
+  url         String
+  analysis    Json? // AI analysis results
+  category    DocumentType
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Notification {
+  id        String @id @default(cuid())
+  user      User   @relation(fields: [userId], references: [id])
+  userId    String
+  title     String
+  message   String
+  type      NotificationType
+  isRead    Boolean @default(false)
+  actionUrl String?
+  metadata  Json?
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model UserActivity {
+  id        String @id @default(cuid())
+  user      User   @relation(fields: [userId], references: [id])
+  userId    String
+  action    String
+  resource  String? // program_id, scholarship_id, etc.
+  metadata  Json?
+  ipAddress String?
+  userAgent String?
+  
+  createdAt DateTime @default(now())
+}
+
+model AIRecommendation {
+  id            String @id @default(cuid())
+  user          User   @relation(fields: [userId], references: [id])
+  userId        String
+  type          RecommendationType
+  content       Json // recommendation data
+  score         Float // confidence score
+  isAccepted    Boolean?
+  feedback      String?
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Interview {
+  id            String @id @default(cuid())
+  user          User   @relation(fields: [userId], references: [id])
+  userId        String
+  program       Program @relation(fields: [programId], references: [id])
+  programId     String
+  scheduledAt   DateTime
+  status        InterviewStatus @default(SCHEDULED)
+  type          InterviewType
+  notes         String?
+  feedback      Json?
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+enum UserRole {
+  STUDENT
+  ADMIN
+  COUNSELOR
+}
+
+enum ApplicationStatus {
+  DRAFT
+  SUBMITTED
+  UNDER_REVIEW
+  ACCEPTED
+  REJECTED
+  WAITLISTED
+}
+
+enum ScholarshipType {
+  MERIT
+  NEED_BASED
+  COUNTRY_SPECIFIC
+  FIELD_SPECIFIC
+  UNIVERSITY
+  GOVERNMENT
+}
+
+// Phase 4: New Enums
+enum DocumentType {
+  TRANSCRIPT
+  PASSPORT
+  LANGUAGE_TEST
+  RECOMMENDATION_LETTER
+  PERSONAL_STATEMENT
+  CV_RESUME
+  PORTFOLIO
+  CERTIFICATE
+  OTHER
+}
+
+enum NotificationType {
+  DEADLINE_REMINDER
+  APPLICATION_UPDATE
+  NEW_RECOMMENDATION
+  SYSTEM_ANNOUNCEMENT
+  INTERVIEW_SCHEDULED
+  DOCUMENT_PROCESSED
+  SCHOLARSHIP_MATCH
+}
+
+enum RecommendationType {
+  PROGRAM_MATCH
+  SCHOLARSHIP_OPPORTUNITY
+  DOCUMENT_SUGGESTION
+  CAREER_GUIDANCE
+  INTERVIEW_TIP
+  APPLICATION_IMPROVEMENT
+}
+
+enum InterviewStatus {
+  SCHEDULED
+  COMPLETED
+  CANCELLED
+  RESCHEDULED
+  NO_SHOW
+}
+
+enum InterviewType {
+  ADMISSION
+  SCHOLARSHIP
+  VISA
+  MOCK_PRACTICE
+  COUNSELING
+}
