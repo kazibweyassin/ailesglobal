@@ -36,7 +36,7 @@ const countryFlags = {
   'Japan': '🇯🇵'
 }
 
-export default function NavigationNew() {
+export function NavigationNew() {
   const { data: session } = useSession()
   const router = useRouter()
   const { searchQuery, setSearchQuery, filteredPrograms } = useAppStore()
@@ -387,14 +387,7 @@ export default function NavigationNew() {
     </nav>
   )
 }
-  GraduationCap,
-  BookOpen,
-  User,
-  Settings,
-  LogOut,
-  Bell,
-  Heart
-} from 'lucide-react'
+
 
 export default function Navigation() {
   const { data: session, status } = useSession()

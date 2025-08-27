@@ -10,7 +10,8 @@ export async function GET(request: NextRequest) {
     }
 
     // Only admins can access analytics
-    if (session.user.role !== 'admin') {
+  // Safely check role (User type may not include role) before authorizing
+  if (!session || !(('role' in session.user) && (session.user as any).role === 'admin')) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 

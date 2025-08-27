@@ -10,8 +10,14 @@ import {
   Star,
   MapPin,
   Calendar,
-  DollarSign
+  DollarSign,
+  User,
+  Award,
+  TrendingUp,
+  Clock
 } from 'lucide-react'
+import Link from 'next/link'
+import { Button } from '@/components/ui/Button'
 import { formatCurrency, formatDate, getDaysUntilDeadline } from '@/lib/utils'
 import { Program } from '@/types'
 import { mockPrograms } from '@/data/programs'

@@ -52,8 +52,16 @@ interface UserProfile {
 }
 
 export async function POST(request: NextRequest) {
+  // declare here so catch can access for fallback logic
+  let messages: ChatMessage[] = []
+  let userProfile: UserProfile | undefined
+  let context: string | undefined
+
   try {
-    const { messages, userProfile, context } = await request.json()
+    const body = await request.json()
+    messages = body.messages ?? []
+    userProfile = body.userProfile
+    context = body.context
 
     // Enhanced context with user profile
     let enhancedMessages: ChatMessage[] = [
@@ -112,8 +120,8 @@ Please tailor your advice based on this profile information.`
       default: "I'm here to help with your study abroad journey! I can assist with:\n\n• University and program selection\n• Scholarship opportunities\n• Application strategies\n• Visa requirements\n• Cultural preparation\n• Financial planning\n\nWhat specific aspect would you like guidance on?"
     }
 
-    // Determine appropriate fallback based on user message
-    const userMessage = messages[messages.length - 1]?.content?.toLowerCase() || ''
+  // Determine appropriate fallback based on user message
+  const userMessage = messages[messages.length - 1]?.content?.toLowerCase() || ''
     let fallbackResponse = fallbackResponses.default
 
     if (userMessage.includes('scholarship') || userMessage.includes('funding')) {
